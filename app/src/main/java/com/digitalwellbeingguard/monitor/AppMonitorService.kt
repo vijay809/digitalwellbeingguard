@@ -115,7 +115,25 @@ class AppMonitorService : Service() {
                                   val label = getIntervalLabel(warningIntervalMs)
                                   val message = "You've been using apps for $label."
                                   val delaySeconds = warningCount * 10
-                                  overlayManager.showOverlay(formattedTime, message, delaySeconds) {
+                                  overlayManager.showOverlay(formattedTime, message, delaySeconds) { isExcluded ->
+                                      if (isExcluded && lastApp != null) {
+                                          val prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(this@AppMonitorService)
+                                          val excluded = prefs.getStringSet("explicit_excluded_apps", emptySet())?.toMutableSet() ?: mutableSetOf()
+                                          excluded.add(lastApp!!)
+                                          
+                                          val monitored = prefs.getStringSet("explicit_monitored_apps", emptySet())?.toMutableSet() ?: mutableSetOf()
+                                          monitored.remove(lastApp!!)
+                                          
+                                          prefs.edit()
+                                              .putStringSet("explicit_excluded_apps", excluded)
+                                              .putStringSet("explicit_monitored_apps", monitored)
+                                              .apply()
+                                              
+                                          monitoredApps = monitored
+                                          lastApp = null
+                                          notificationHelper.updateNotification("Monitoring app usage...")
+                                      }
+
                                       // On Continue Clicked
                                       warningTriggered = false
                                       warningCount++

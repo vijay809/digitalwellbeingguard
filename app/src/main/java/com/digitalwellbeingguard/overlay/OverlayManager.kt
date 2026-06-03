@@ -11,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -31,7 +32,7 @@ class OverlayManager(private val context: Context) {
         time: String,
         message: String,
         delaySeconds: Int = 0,
-        onContinueListener: () -> Unit
+        onContinueListener: (Boolean) -> Unit
     ) {
         if (isOverlayShowing()) return
 
@@ -60,8 +61,10 @@ class OverlayManager(private val context: Context) {
             tvTimer?.text = time
             tvMessage?.text = message
 
+            val cbExcludeApp = overlayView?.findViewById<CheckBox>(R.id.cbExcludeApp)
+
             btnContinue?.setOnClickListener {
-                onContinueListener()
+                onContinueListener(cbExcludeApp?.isChecked == true)
                 removeOverlay()
             }
 
@@ -100,6 +103,7 @@ class OverlayManager(private val context: Context) {
                             btnContinue?.isEnabled = true
                             btnContinue?.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#2196F3"))
                             btnContinue?.text = "Continue"
+                            cbExcludeApp?.visibility = View.VISIBLE
                         } else {
                             // Incorrect PIN
                             layoutNumpad?.visibility = View.GONE
