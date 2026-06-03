@@ -6,6 +6,9 @@ import android.app.NotificationChannel
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import android.app.Notification
+import android.app.PendingIntent
+import android.content.Intent
+import com.digitalwellbeingguard.MainActivity
 import com.digitalwellbeingguard.R
 
 class NotificationHelper(private val context: Context) {
@@ -34,23 +37,35 @@ class NotificationHelper(private val context: Context) {
     }
 
     fun buildForegroundNotification(): Notification {
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle("Digital Wellbeing Active")
             .setContentText("Monitoring usage...")
             .setSmallIcon(R.mipmap.ic_launcher) 
             .setPriority(NotificationCompat.PRIORITY_DEFAULT) // FIX: Changed from LOW to DEFAULT
             .setCategory(NotificationCompat.CATEGORY_SERVICE) // FIX: Added category
+            .setContentIntent(pendingIntent)
             .setOngoing(true)
             .build()
     }
 
     fun updateNotification(time: String) {
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle("Digital Wellbeing Active")
             .setContentText("Monitoring usage... $time")
             .setSmallIcon(R.mipmap.ic_launcher)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT) // FIX: Changed from LOW to DEFAULT
             .setCategory(NotificationCompat.CATEGORY_SERVICE) // FIX: Added category
+            .setContentIntent(pendingIntent)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .build()

@@ -117,12 +117,10 @@ class AppMonitorService : Service() {
                                       // On Continue Clicked
                                       warningTriggered = false
                                       warningCount++
-                                      // DO NOT Reset sessionStartTime
                                       
-                                      // Catch up if multiple intervals passed (e.g. ignored for long time)
-                                      while (nextTriggerTime <= elapsedTime) {
-                                          nextTriggerTime += warningIntervalMs
-                                      }
+                                      // Set next trigger time strictly relative to the exact moment the user clicks continue
+                                      val currentElapsed = System.currentTimeMillis() - sessionStartTime
+                                      nextTriggerTime = currentElapsed + warningIntervalMs
                                   }
                              }
                          }

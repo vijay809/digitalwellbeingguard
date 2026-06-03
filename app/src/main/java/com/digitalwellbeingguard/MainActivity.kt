@@ -101,7 +101,7 @@ fun MainScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Digital Wellbeing Guard",
+            text = "Digital Guard",
             style = MaterialTheme.typography.headlineMedium
         )
         
@@ -289,7 +289,7 @@ fun MainScreenPreview() {
              verticalArrangement = Arrangement.Center,
              horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "Digital Wellbeing Guard")
+            Text(text = "Digital Guard")
             PermissionStatusItem("Usage Access", false)
             PermissionStatusItem("Overlay", true)
             PermissionStatusItem("Battery", false)

@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.digitalwellbeingguard
 
 import org.junit.Test
 
