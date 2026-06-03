@@ -53,6 +53,24 @@ class UsageRepository {
             .sortedByDescending { it.totalTime }
     }
 
+    fun getInstalledApps(context: Context): List<AppUsage> {
+        val packageManager = context.packageManager
+        val intent = Intent(Intent.ACTION_MAIN, null)
+        intent.addCategory(Intent.CATEGORY_LAUNCHER)
+        
+        val apps = packageManager.queryIntentActivities(intent, 0)
+        return apps.mapNotNull { resolveInfo ->
+            val packageName = resolveInfo.activityInfo.packageName
+            if (shouldIncludeApp(packageName, context)) {
+                val appName = resolveInfo.loadLabel(packageManager).toString()
+                val icon = resolveInfo.loadIcon(packageManager)
+                AppUsage(packageName, appName, 0L, icon)
+            } else {
+                null
+            }
+        }.sortedBy { it.appName.lowercase() }
+    }
+
     private fun shouldIncludeApp(packageName: String, context: Context): Boolean {
         // Exclude self
         if (packageName == context.packageName) return false

@@ -24,6 +24,13 @@ class MainViewModel : ViewModel() {
     private val _permissionState = MutableStateFlow(PermissionState())
     val permissionState: StateFlow<PermissionState> = _permissionState.asStateFlow()
 
+    private val _hasPin = MutableStateFlow(false)
+    val hasPin: StateFlow<Boolean> = _hasPin.asStateFlow()
+
+    private val _isAppUnlocked = MutableStateFlow(false)
+    val isAppUnlocked: StateFlow<Boolean> = _isAppUnlocked.asStateFlow()
+
+
     private val _isMonitoring = MutableStateFlow(false)
     val isMonitoring: StateFlow<Boolean> = _isMonitoring.asStateFlow()
 
@@ -51,14 +58,44 @@ class MainViewModel : ViewModel() {
     private val _selectedInterval = MutableStateFlow(WarningInterval.MIN_5)
     val selectedInterval: StateFlow<WarningInterval> = _selectedInterval.asStateFlow()
     
-    // Load saved interval on init
+        // Load saved interval on init
     fun loadSettings(context: Context) {
         val prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context)
         val savedMillis = prefs.getLong("warning_interval", 300_000L)
         _selectedInterval.value = WarningInterval.fromMillis(savedMillis)
         
+        loadPinState(context)
+
         // Load usage data
         loadUsageData(context)
+    }
+
+    fun loadPinState(context: Context) {
+        val prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context)
+        val savedPin = prefs.getString("app_pin", null)
+        _hasPin.value = !savedPin.isNullOrEmpty()
+        if (_hasPin.value) {
+            _isAppUnlocked.value = false // Lock app initially if pin exists
+        } else {
+            _isAppUnlocked.value = true // Unlocked if no pin
+        }
+    }
+
+    fun setPin(context: Context, pin: String) {
+        val prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context)
+        prefs.edit().putString("app_pin", pin).apply()
+        _hasPin.value = true
+        _isAppUnlocked.value = true
+    }
+
+    fun verifyAppPin(context: Context, pin: String): Boolean {
+        val prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context)
+        val savedPin = prefs.getString("app_pin", null)
+        if (savedPin == pin) {
+            _isAppUnlocked.value = true
+            return true
+        }
+        return false
     }
 
     fun setWarningInterval(context: Context, interval: WarningInterval) {
@@ -104,6 +141,8 @@ class MainViewModel : ViewModel() {
         val prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context)
         val savedMillis = prefs.getLong("warning_interval", 300_000L)
         _selectedInterval.value = WarningInterval.fromMillis(savedMillis)
+
+        loadPinState(context)
         
         // Also refresh usage data when resuming
         loadUsageData(context)

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
@@ -47,6 +48,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.zIndex
+import androidx.compose.foundation.background
+import com.digitalwellbeingguard.ui.SetPinDialog
+import com.digitalwellbeingguard.ui.EnterPinDialog
 import com.digitalwellbeingguard.ui.theme.DigitalWellbeingGuardTheme
 import com.digitalwellbeingguard.viewmodel.MainViewModel
 import com.digitalwellbeingguard.viewmodel.PermissionState
@@ -82,6 +91,13 @@ fun MainScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val permissionState by viewModel.permissionState.collectAsState()
     val isMonitoring by viewModel.isMonitoring.collectAsState()
+    val hasPin by viewModel.hasPin.collectAsState()
+    val isAppUnlocked by viewModel.isAppUnlocked.collectAsState()
+
+    var showSetPinDialog by remember { mutableStateOf(false) }
+    var showEnterPinDialog by remember { mutableStateOf(false) }
+    var pinErrorMessage by remember { mutableStateOf("") }
+    var lockIsRed by remember { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -124,6 +140,13 @@ fun MainScreen(
             label = "Notification",
             isGranted = permissionState.notification
         )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(text = "App PIN Security", style = MaterialTheme.typography.bodyLarge)
+            Text(text = if (hasPin) "✅" else "🟡")
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -155,6 +178,10 @@ fun MainScreen(
             }
             Spacer(modifier = Modifier.height(8.dp))
         }
+
+        Button(onClick = { showSetPinDialog = true }) {
+            Text(text = if (hasPin) "Change PIN" else "Set PIN")
+        }
         
         Spacer(modifier = Modifier.height(32.dp))
         
@@ -173,37 +200,68 @@ fun MainScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
         
-        // Feature 2: Interval Selector
-        val selectedInterval by viewModel.selectedInterval.collectAsState()
-        var expanded by remember { mutableStateOf(false) }
-
-        Box {
-            OutlinedButton(onClick = { expanded = true }) {
-                Text("Warning Interval: ${selectedInterval.label}")
-            }
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(16.dp)
             ) {
-                MainViewModel.WarningInterval.entries.forEach { interval ->
-                    DropdownMenuItem(
-                        text = { Text(interval.label) },
-                        onClick = {
-                            viewModel.setWarningInterval(context, interval)
-                            expanded = false
+                // Feature 2: Interval Selector
+                val selectedInterval by viewModel.selectedInterval.collectAsState()
+                var expanded by remember { mutableStateOf(false) }
+
+                Box {
+                    OutlinedButton(
+                        onClick = { expanded = true },
+                        enabled = isAppUnlocked || !hasPin
+                    ) {
+                        Text("Warning Interval: ${selectedInterval.label}")
+                    }
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        MainViewModel.WarningInterval.entries.forEach { interval ->
+                            DropdownMenuItem(
+                                text = { Text(interval.label) },
+                                onClick = {
+                                    viewModel.setWarningInterval(context, interval)
+                                    expanded = false
+                                }
+                            )
                         }
-                    )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Button(
+                    onClick = { viewModel.toggleMonitoring(context) },
+                    enabled = (viewModel.canStartMonitoring() || isMonitoring) && (isAppUnlocked || !hasPin)
+                ) {
+                    Text(text = if (isMonitoring) "Stop Monitoring" else "Start Monitoring")
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Button(
-            onClick = { viewModel.toggleMonitoring(context) },
-            enabled = viewModel.canStartMonitoring() || isMonitoring // Allow stop even if permissions revoked
-        ) {
-            Text(text = if (isMonitoring) "Stop Monitoring" else "Start Monitoring")
+            if (hasPin && !isAppUnlocked) {
+                // Semi-transparent overlay with Lock Icon
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(Color.White.copy(alpha = 0.7f))
+                        .zIndex(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    IconButton(
+                        onClick = { showEnterPinDialog = true },
+                        enabled = !lockIsRed,
+                        modifier = Modifier
+                            .size(64.dp)
+                            .background(if (lockIsRed) Color.Red else MaterialTheme.colorScheme.primary, CircleShape)
+                    ) {
+                        Icon(Icons.Filled.Lock, contentDescription = "Unlock", tint = Color.White)
+                    }
+                }
+            }
         }
         
         Spacer(modifier = Modifier.height(24.dp))
@@ -264,6 +322,37 @@ fun MainScreen(
                 }
             }
         }
+    }
+
+    if (showSetPinDialog) {
+        SetPinDialog(
+            onDismiss = { showSetPinDialog = false },
+            onPinSet = { pin ->
+                viewModel.setPin(context, pin)
+                showSetPinDialog = false
+            }
+        )
+    }
+
+    if (showEnterPinDialog) {
+        EnterPinDialog(
+            onDismiss = {
+                showEnterPinDialog = false
+                pinErrorMessage = ""
+            },
+            onPinEntered = { pin ->
+                if (viewModel.verifyAppPin(context, pin)) {
+                    showEnterPinDialog = false
+                    pinErrorMessage = ""
+                    lockIsRed = false
+                } else {
+                    pinErrorMessage = "Incorrect PIN"
+                    showEnterPinDialog = false
+                    lockIsRed = true
+                }
+            },
+            errorMessage = pinErrorMessage
+        )
     }
 }
 

@@ -11,6 +11,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
+import android.widget.ImageButton
+import android.widget.LinearLayout
 import android.widget.TextView
 import com.digitalwellbeingguard.R
 
@@ -62,6 +64,71 @@ class OverlayManager(private val context: Context) {
                 onContinueListener()
                 removeOverlay()
             }
+
+            val btnUnlock = overlayView?.findViewById<ImageButton>(R.id.btnUnlock)
+            val layoutNumpad = overlayView?.findViewById<LinearLayout>(R.id.layoutNumpad)
+            val tvPinEntry = overlayView?.findViewById<TextView>(R.id.tvPinEntry)
+
+            val prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context)
+            val savedPin = prefs.getString("app_pin", null)
+            val hasPin = !savedPin.isNullOrEmpty()
+
+            if (hasPin && delaySeconds > 0) {
+                btnUnlock?.visibility = View.VISIBLE
+            } else {
+                btnUnlock?.visibility = View.GONE
+            }
+
+            var currentPinEntry = ""
+
+            btnUnlock?.setOnClickListener {
+                layoutNumpad?.visibility = View.VISIBLE
+            }
+
+            val numClick = View.OnClickListener { v ->
+                if (currentPinEntry.length < 4) {
+                    val num = (v as Button).text.toString()
+                    currentPinEntry += num
+                    tvPinEntry?.text = "* ".repeat(currentPinEntry.length).trimEnd()
+
+                    if (currentPinEntry.length == 4) {
+                        if (currentPinEntry == savedPin) {
+                            // Correct PIN
+                            layoutNumpad?.visibility = View.GONE
+                            btnUnlock?.visibility = View.GONE
+                            countDownTimer?.cancel()
+                            btnContinue?.isEnabled = true
+                            btnContinue?.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#2196F3"))
+                            btnContinue?.text = "Continue"
+                        } else {
+                            // Incorrect PIN
+                            layoutNumpad?.visibility = View.GONE
+                            btnUnlock?.isEnabled = false
+                            btnUnlock?.backgroundTintList = ColorStateList.valueOf(Color.RED)
+                        }
+                    }
+                }
+            }
+
+            val delClick = View.OnClickListener {
+                if (currentPinEntry.isNotEmpty()) {
+                    currentPinEntry = currentPinEntry.dropLast(1)
+                    tvPinEntry?.text = "* ".repeat(currentPinEntry.length).trimEnd()
+                }
+            }
+
+            overlayView?.findViewById<Button>(R.id.btnNum1)?.setOnClickListener(numClick)
+            overlayView?.findViewById<Button>(R.id.btnNum2)?.setOnClickListener(numClick)
+            overlayView?.findViewById<Button>(R.id.btnNum3)?.setOnClickListener(numClick)
+            overlayView?.findViewById<Button>(R.id.btnNum4)?.setOnClickListener(numClick)
+            overlayView?.findViewById<Button>(R.id.btnNum5)?.setOnClickListener(numClick)
+            overlayView?.findViewById<Button>(R.id.btnNum6)?.setOnClickListener(numClick)
+            overlayView?.findViewById<Button>(R.id.btnNum7)?.setOnClickListener(numClick)
+            overlayView?.findViewById<Button>(R.id.btnNum8)?.setOnClickListener(numClick)
+            overlayView?.findViewById<Button>(R.id.btnNum9)?.setOnClickListener(numClick)
+            overlayView?.findViewById<Button>(R.id.btnNum0)?.setOnClickListener(numClick)
+            overlayView?.findViewById<Button>(R.id.btnNumDel)?.setOnClickListener(delClick)
+
             
             if (delaySeconds > 0) {
                 btnContinue?.isEnabled = false

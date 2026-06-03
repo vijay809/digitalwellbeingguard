@@ -43,15 +43,75 @@
                 android:gravity="center"
                 android:layout_marginBottom="24dp"/>
 
-            <Button
-                android:id="@+id/btnContinue"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Continue"
-                android:backgroundTint="#2196F3"
-                android:textColor="#FFFFFF"
-                android:paddingStart="32dp"
-                android:paddingEnd="32dp"/>
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+
+                <ImageButton
+                    android:id="@+id/btnUnlock"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@android:drawable/ic_secure"
+                    android:backgroundTint="#2196F3"
+                    android:layout_marginEnd="8dp"
+                    android:visibility="gone"/>
+
+                <Button
+                    android:id="@+id/btnContinue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Continue"
+                    android:backgroundTint="#2196F3"
+                    android:textColor="#FFFFFF"
+                    android:paddingStart="32dp"
+                    android:paddingEnd="32dp"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/layoutNumpad"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/tvPinEntry"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:textSize="24sp"
+                    android:textColor="#212121"
+                    android:letterSpacing="0.3"
+                    android:layout_marginBottom="16dp"/>
+
+                <GridLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:columnCount="3"
+                    android:rowCount="4">
+
+                    <Button android:id="@+id/btnNum1" android:text="1" style="?android:attr/buttonBarButtonStyle" />
+                    <Button android:id="@+id/btnNum2" android:text="2" style="?android:attr/buttonBarButtonStyle" />
+                    <Button android:id="@+id/btnNum3" android:text="3" style="?android:attr/buttonBarButtonStyle" />
+                    
+                    <Button android:id="@+id/btnNum4" android:text="4" style="?android:attr/buttonBarButtonStyle" />
+                    <Button android:id="@+id/btnNum5" android:text="5" style="?android:attr/buttonBarButtonStyle" />
+                    <Button android:id="@+id/btnNum6" android:text="6" style="?android:attr/buttonBarButtonStyle" />
+                    
+                    <Button android:id="@+id/btnNum7" android:text="7" style="?android:attr/buttonBarButtonStyle" />
+                    <Button android:id="@+id/btnNum8" android:text="8" style="?android:attr/buttonBarButtonStyle" />
+                    <Button android:id="@+id/btnNum9" android:text="9" style="?android:attr/buttonBarButtonStyle" />
+                    
+                    <Space />
+                    <Button android:id="@+id/btnNum0" android:text="0" style="?android:attr/buttonBarButtonStyle" />
+                    <Button android:id="@+id/btnNumDel" android:text="DEL" style="?android:attr/buttonBarButtonStyle" />
+
+                </GridLayout>
+            </LinearLayout>
 
         </LinearLayout>
 
