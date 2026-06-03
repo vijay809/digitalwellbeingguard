@@ -26,6 +26,10 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.foundation.clickable
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.size
@@ -93,9 +97,11 @@ fun MainScreen(
     val isMonitoring by viewModel.isMonitoring.collectAsState()
     val hasPin by viewModel.hasPin.collectAsState()
     val isAppUnlocked by viewModel.isAppUnlocked.collectAsState()
+    val configuredApps by viewModel.configuredApps.collectAsState()
 
     var showSetPinDialog by remember { mutableStateOf(false) }
     var showEnterPinDialog by remember { mutableStateOf(false) }
+    var showAddAppDialog by remember { mutableStateOf(false) }
     var pinErrorMessage by remember { mutableStateOf("") }
     var lockIsRed by remember { mutableStateOf(false) }
 
@@ -267,14 +273,21 @@ fun MainScreen(
         Spacer(modifier = Modifier.height(24.dp))
         
         // Feature 3: Usage Report
-        Text(
-            text = "Apps Used More Than 5 Minutes Today",
-            style = MaterialTheme.typography.titleMedium
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "Monitored Apps",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f)
+            )
+            Button(onClick = { showAddAppDialog = true }) {
+                Text("+ Add App")
+            }
+        }
         
         val usageList by viewModel.usageList.collectAsState()
+        val sortedUsageList = usageList.sortedByDescending { configuredApps[it.packageName] == true }
         
-        if (usageList.isEmpty()) {
+        if (sortedUsageList.isEmpty()) {
             Text(
                 text = "No apps exceed limit today.",
                 style = MaterialTheme.typography.bodyMedium,
@@ -286,7 +299,7 @@ fun MainScreen(
                 modifier = Modifier.fillMaxWidth().height(200.dp),
                 contentPadding = PaddingValues(top = 8.dp)
             ) {
-                items(usageList) { app ->
+                items(sortedUsageList) { app ->
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -302,7 +315,7 @@ fun MainScreen(
                         
                         Spacer(modifier = Modifier.width(12.dp))
                         
-                        Column {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = app.appName, 
                                 style = MaterialTheme.typography.bodyMedium,
@@ -317,6 +330,13 @@ fun MainScreen(
                                 color = Color.Gray
                             )
                         }
+                        
+                        Checkbox(
+                            checked = configuredApps[app.packageName] == true,
+                            onCheckedChange = { isChecked ->
+                                viewModel.toggleAppStatus(context, app.packageName, isChecked)
+                            }
+                        )
                     }
                     HorizontalDivider(color = Color.LightGray)
                 }
@@ -353,6 +373,57 @@ fun MainScreen(
             },
             errorMessage = pinErrorMessage
         )
+    }
+
+    if (showAddAppDialog) {
+        val installedApps = remember { mutableStateOf<List<com.digitalwellbeingguard.data.AppUsage>>(emptyList()) }
+        
+        androidx.compose.runtime.LaunchedEffect(Unit) {
+            val apps = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                com.digitalwellbeingguard.data.UsageRepository().getInstalledApps(context)
+            }
+            installedApps.value = apps
+        }
+        
+        androidx.compose.ui.window.Dialog(onDismissRequest = { showAddAppDialog = false }) {
+            androidx.compose.material3.Surface(
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surface
+            ) {
+                Column(modifier = Modifier.padding(16.dp).fillMaxWidth().height(400.dp)) {
+                    Text(text = "Select App to Monitor", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    if (installedApps.value.isEmpty()) {
+                        Text("Loading...")
+                    } else {
+                        LazyColumn {
+                            items(installedApps.value) { app ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            viewModel.manuallyAddApp(context, app)
+                                            showAddAppDialog = false
+                                        }
+                                        .padding(vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    if (app.appIcon != null) {
+                                        Image(
+                                            bitmap = app.appIcon.toBitmap().asImageBitmap(),
+                                            contentDescription = app.appName,
+                                            modifier = Modifier.size(32.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(text = app.appName)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

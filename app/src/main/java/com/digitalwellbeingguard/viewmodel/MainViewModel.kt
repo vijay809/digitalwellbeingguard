@@ -37,6 +37,9 @@ class MainViewModel : ViewModel() {
     private val _usageList = MutableStateFlow<List<com.digitalwellbeingguard.data.AppUsage>>(emptyList())
     val usageList: StateFlow<List<com.digitalwellbeingguard.data.AppUsage>> = _usageList.asStateFlow()
 
+    private val _configuredApps = MutableStateFlow<Map<String, Boolean>>(emptyMap())
+    val configuredApps: StateFlow<Map<String, Boolean>> = _configuredApps.asStateFlow()
+
     private val usageRepository = com.digitalwellbeingguard.data.UsageRepository()
     
     // Feature 2: Dynamic Interval
@@ -114,11 +117,83 @@ class MainViewModel : ViewModel() {
     }
     
     fun loadUsageData(context: Context) {
+        val prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context)
+        val monitored = prefs.getStringSet("explicit_monitored_apps", emptySet()) ?: emptySet()
+        val excluded = prefs.getStringSet("explicit_excluded_apps", emptySet()) ?: emptySet()
+        
+        val configMap = mutableMapOf<String, Boolean>()
+        monitored.forEach { configMap[it] = true }
+        excluded.forEach { configMap[it] = false }
+
         // Run in background
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-            val usage = usageRepository.getAppsUsedMoreThan(context, 5 * 60 * 1000L) // 5 mins
+            val usage = usageRepository.getAppsUsedMoreThan(context, 5 * 60 * 1000L).toMutableList() // 5 mins
+            
+            var changed = false
+            for (app in usage) {
+                if (app.totalTime > 30 * 60 * 1000L) { // > 30 mins
+                    if (!configMap.containsKey(app.packageName)) {
+                        configMap[app.packageName] = true
+                        changed = true
+                    }
+                }
+            }
+            
+            val existingPackages = usage.map { it.packageName }.toSet()
+            val pm = context.packageManager
+            for (pkg in configMap.keys) {
+                if (!existingPackages.contains(pkg)) {
+                    try {
+                        val appInfo = pm.getApplicationInfo(pkg, 0)
+                        val appName = pm.getApplicationLabel(appInfo).toString()
+                        val icon = pm.getApplicationIcon(appInfo)
+                        usage.add(com.digitalwellbeingguard.data.AppUsage(pkg, appName, 0L, icon))
+                    } catch (e: Exception) {
+                        // ignore if uninstalled
+                    }
+                }
+            }
+
+            if (changed) {
+                val newMonitored = configMap.filterValues { it }.keys
+                prefs.edit().putStringSet("explicit_monitored_apps", newMonitored).apply()
+            }
+            
+            _configuredApps.value = configMap
             _usageList.value = usage
         }
+    }
+
+    fun toggleAppStatus(context: Context, packageName: String, isMonitored: Boolean) {
+        val prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context)
+        val configMap = _configuredApps.value.toMutableMap()
+        configMap[packageName] = isMonitored
+        
+        val monitored = configMap.filterValues { it }.keys
+        val excluded = configMap.filterValues { !it }.keys
+        
+        prefs.edit()
+            .putStringSet("explicit_monitored_apps", monitored)
+            .putStringSet("explicit_excluded_apps", excluded)
+            .apply()
+            
+        _configuredApps.value = configMap
+        
+        if (isServiceRunning(context)) {
+            stopMonitoring(context)
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                startMonitoring(context)
+            }, 500)
+        }
+    }
+
+    fun manuallyAddApp(context: Context, appUsage: com.digitalwellbeingguard.data.AppUsage) {
+        val currentList = _usageList.value.toMutableList()
+        if (currentList.none { it.packageName == appUsage.packageName }) {
+            currentList.add(appUsage)
+            _usageList.value = currentList
+        }
+        toggleAppStatus(context, appUsage.packageName, true)
     }
 
     private var permissionManager: PermissionManager? = null

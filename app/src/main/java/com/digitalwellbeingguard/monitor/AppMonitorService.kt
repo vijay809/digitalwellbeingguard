@@ -30,6 +30,7 @@ class AppMonitorService : Service() {
     private var warningIntervalMs: Long = 60_000L // Default 1 min if prefs fail
     private var nextTriggerTime: Long = 0L
     private var warningCount = 0
+    private var monitoredApps: Set<String> = emptySet()
 
     override fun onCreate() {
         super.onCreate()
@@ -40,6 +41,7 @@ class AppMonitorService : Service() {
         // Load interval preference
         val prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(this)
         warningIntervalMs = prefs.getLong("warning_interval", 300_000L) // Default 5 mins (300,000)
+        monitoredApps = prefs.getStringSet("explicit_monitored_apps", emptySet()) ?: emptySet()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -158,8 +160,8 @@ class AppMonitorService : Service() {
     }
 
     private fun isMonitoredApp(packageName: String): Boolean {
-        return packageName != this.packageName && 
-               !isLauncher(packageName) && 
+        return monitoredApps.contains(packageName) &&
+               packageName != this.packageName && 
                packageName != "com.android.systemui"
     }
 
