@@ -191,22 +191,15 @@ fun DashboardTopAppBar() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Box(
+            Image(
+                painter = androidx.compose.ui.res.painterResource(id = R.drawable.app_icon),
+                contentDescription = "App Icon",
                 modifier = Modifier
                     .size(32.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Favorite,
-                    contentDescription = "Logo",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
+            )
             Text(
-                text = "MindfulFlow",
+                text = "Mindful   Scrolling",
                 style = MaterialTheme.typography.displayLarge,
                 fontSize = 20.sp,
                 color = MaterialTheme.colorScheme.primary,
@@ -214,15 +207,7 @@ fun DashboardTopAppBar() {
             )
         }
         
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .border(2.dp, Color.White, CircleShape)
-                .background(Color.Gray)
-        ) {
-            Icon(Icons.Filled.Person, contentDescription = "User", tint = Color.White, modifier = Modifier.align(Alignment.Center))
-        }
+        // Removed user profile icon per request
     }
 }
 
@@ -683,7 +668,7 @@ fun MonitoredAppsSection(viewModel: MainViewModel, isAppUnlocked: Boolean) {
                                 }
                             }
                             Column {
-                                Text(text = app.packageName, style = MaterialTheme.typography.titleMedium, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                Text(text = app.appName, style = MaterialTheme.typography.titleMedium, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                                 val minutes = (app.totalTime / 1000) / 60
                                 val seconds = ((app.totalTime / 1000) % 60)
                                 Text(text = "Active Today: ${String.format("%02d:%02d", minutes, seconds)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), letterSpacing = 1.sp)

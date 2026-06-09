@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MindfulFlow - Focused Moment</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&amp;family=Nunito+Sans:wght@300;400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary-fixed": "#001d32",
+                      "primary": "#146a5c",
+                      "on-primary-container": "#005c4f",
+                      "surface-container": "#efeeeb",
+                      "on-surface-variant": "#3f4946",
+                      "surface-container-high": "#e9e8e5",
+                      "on-tertiary": "#ffffff",
+                      "background": "#faf9f6",
+                      "surface-dim": "#dbdad7",
+                      "surface-bright": "#faf9f6",
+                      "inverse-surface": "#2f312f",
+                      "surface-variant": "#e3e2e0",
+                      "secondary-fixed": "#e7deff",
+                      "error-container": "#ffdad6",
+                      "surface-container-low": "#f4f3f1",
+                      "on-background": "#1a1c1a",
+                      "inverse-on-surface": "#f2f1ee",
+                      "tertiary-container": "#99c9f6",
+                      "tertiary": "#30628a",
+                      "outline": "#6f7976",
+                      "primary-container": "#86d2c1",
+                      "outline-variant": "#bec9c5",
+                      "on-error-container": "#93000a",
+                      "tertiary-fixed": "#cde5ff",
+                      "secondary-fixed-dim": "#ccbefc",
+                      "on-primary": "#ffffff",
+                      "tertiary-fixed-dim": "#9bcbf8",
+                      "on-primary-fixed": "#00201b",
+                      "on-error": "#ffffff",
+                      "error": "#ba1a1a",
+                      "on-tertiary-container": "#1f557b",
+                      "on-primary-fixed-variant": "#005045",
+                      "surface-container-highest": "#e3e2e0",
+                      "surface-container-lowest": "#ffffff",
+                      "on-secondary": "#ffffff",
+                      "primary-fixed-dim": "#89d5c4",
+                      "on-secondary-container": "#584c82",
+                      "on-surface": "#1a1c1a",
+                      "secondary": "#62568d",
+                      "on-secondary-fixed-variant": "#4a3f74",
+                      "inverse-primary": "#89d5c4",
+                      "secondary-container": "#cfc1ff",
+                      "primary-fixed": "#a4f1df",
+                      "on-tertiary-fixed-variant": "#104a70",
+                      "surface-tint": "#146a5c",
+                      "surface": "#faf9f6",
+                      "on-secondary-fixed": "#1e1145"
+              },
+              "borderRadius": {
+                      "DEFAULT": "1rem",
+                      "lg": "2rem",
+                      "xl": "3rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "sm": "12px",
+                      "md": "16px",
+                      "lg": "24px",
+                      "xs": "4px",
+                      "base": "8px",
+                      "xl": "32px",
+                      "gutter": "16px",
+                      "container-margin": "20px"
+              },
+              "fontFamily": {
+                      "label-lg": ["Nunito Sans"],
+                      "display-lg": ["Quicksand"],
+                      "title-md": ["Quicksand"],
+                      "label-sm": ["Nunito Sans"],
+                      "headline-lg-mobile": ["Quicksand"],
+                      "body-md": ["Nunito Sans"],
+                      "body-lg": ["Nunito Sans"],
+                      "headline-lg": ["Quicksand"]
+              },
+              "fontSize": {
+                      "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "700"}],
+                      "display-lg": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "title-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+      </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(98, 86, 141, 0.1);
+        }
+        .timer-text {
+            color: #FFB3A7; /* Muted Peach */
+            letter-spacing: -0.05em;
+        }
+        .pin-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        .keypad-btn {
+            aspect-ratio: 1/1;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .keypad-btn:active {
+            transform: scale(0.92);
+            background-color: rgba(255, 255, 255, 0.4);
+        }
+        body {
+            background: linear-gradient(135deg, #faf9f6 0%, #e7deff 50%, #a4f1df 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-background p-container-margin">
+<!-- Top Navigation Anchor (Simulated, hidden since this is a focused task) -->
+<!-- Per "Semantic Shell Mandate", navigation is suppressed for task-focused screens -->
+<main class="w-full max-w-md flex flex-col items-center gap-xl">
+<!-- Warning Dialog Card -->
+<div class="glass-card rounded-lg w-full p-xl flex flex-col items-center text-center">
+<!-- Header Icon -->
+<div class="mb-md">
+<span class="material-symbols-outlined text-secondary text-[48px] opacity-80" data-icon="hourglass_empty">hourglass_empty</span>
+</div>
+<!-- Timer Display -->
+<h1 class="font-display-lg text-[64px] timer-text mb-xs leading-none">05:00</h1>
+<p class="font-body-lg text-on-surface-variant mb-xl px-md">
+                You've been using Instagram for 45 minutes. <span class="font-bold">Only 5 minutes remaining.</span>
+</p>
+<!-- Action Cluster -->
+<div class="flex flex-col w-full gap-md">
+<button class="w-full bg-gradient-to-r from-primary to-tertiary text-on-primary py-lg rounded-full font-label-lg flex items-center justify-center gap-base shadow-lg active:scale-95 transition-transform duration-200" id="continue-btn">
+<span>Continue</span>
+<span class="bg-white/20 px-sm py-xs rounded-full text-label-sm" id="countdown-label">10s</span>
+</button>
+<button class="flex items-center justify-center gap-base text-secondary font-label-lg py-md hover:bg-secondary-container/10 rounded-full transition-colors" id="show-pin-btn">
+<span class="material-symbols-outlined" data-icon="lock" style="font-variation-settings: 'FILL' 1;">lock</span>
+<span>Extend with PIN</span>
+</button>
+</div>
+</div>
+<!-- PIN Entry Section (Animated transition target) -->
+<section class="w-full flex flex-col items-center gap-lg" id="pin-section">
+<!-- PIN Dots -->
+<div class="flex gap-lg">
+<div class="pin-dot bg-secondary-container/40" id="dot-1"></div>
+<div class="pin-dot bg-secondary-container/40" id="dot-2"></div>
+<div class="pin-dot bg-secondary-container/40" id="dot-3"></div>
+<div class="pin-dot bg-secondary-container/40" id="dot-4"></div>
+</div>
+<!-- Numeric Keypad -->
+<div class="grid grid-cols-3 gap-lg w-full px-lg">
+<button class="keypad-btn flex items-center justify-center font-display-lg text-headline-lg-mobile text-on-surface bg-white/30 rounded-full">1</button>
+<button class="keypad-btn flex items-center justify-center font-display-lg text-headline-lg-mobile text-on-surface bg-white/30 rounded-full">2</button>
+<button class="keypad-btn flex items-center justify-center font-display-lg text-headline-lg-mobile text-on-surface bg-white/30 rounded-full">3</button>
+<button class="keypad-btn flex items-center justify-center font-display-lg text-headline-lg-mobile text-on-surface bg-white/30 rounded-full">4</button>
+<button class="keypad-btn flex items-center justify-center font-display-lg text-headline-lg-mobile text-on-surface bg-white/30 rounded-full">5</button>
+<button class="keypad-btn flex items-center justify-center font-display-lg text-headline-lg-mobile text-on-surface bg-white/30 rounded-full">6</button>
+<button class="keypad-btn flex items-center justify-center font-display-lg text-headline-lg-mobile text-on-surface bg-white/30 rounded-full">7</button>
+<button class="keypad-btn flex items-center justify-center font-display-lg text-headline-lg-mobile text-on-surface bg-white/30 rounded-full">8</button>
+<button class="keypad-btn flex items-center justify-center font-display-lg text-headline-lg-mobile text-on-surface bg-white/30 rounded-full">9</button>
+<div class="aspect-square"></div>
+<button class="keypad-btn flex items-center justify-center font-display-lg text-headline-lg-mobile text-on-surface bg-white/30 rounded-full">0</button>
+<button class="keypad-btn flex items-center justify-center text-on-surface-variant rounded-full">
+<span class="material-symbols-outlined" data-icon="backspace">backspace</span>
+</button>
+</div>
+</section>
+<!-- Footer Control -->
+<label class="flex items-center gap-md cursor-pointer group mt-xl">
+<input class="w-6 h-6 rounded-md border-outline text-primary focus:ring-primary/20 transition-all" type="checkbox"/>
+<span class="font-label-lg text-on-surface-variant/80 group-hover:text-on-surface">Exclude this app for today</span>
+</label>
+</main>
+<!-- Background Atmospheric Imagery -->
+<div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+<img alt="" class="w-full h-full object-cover opacity-20 scale-110" data-alt="A macro photography shot of soft, ethereal flora with gentle pastel gradients of mint and lavender. The lighting is diffused and dreamlike, creating a serene and supportive environment. The focus is soft, bokeh-heavy, and minimalist, perfectly aligned with a light-mode wellness application aesthetic. The mood is calm and breathy, avoiding high contrast or aggressive shadows." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2ow8HC6AcjTZF4LqpBiE80Np3QcDLB-xVjdIYWX3q10TAkLdPmIOdHYqHsovA4pgTNfycXIBHrsD6WKE--HkiPVj5AfxHGUwK5IJpwzqUAh6Zk6Eom6B-4Q6E82iv8TQUfz4_dpjZgdpH-HDd1t_-4Wl6U7ypsIje_rtbLZodXNWRq2LaTF7Pw2yQI9Wy74XytHTGlCeJhZ_N-hXY5bZBR2g6cjyOxCed2vba1leZQ7kGmiRKQsU40QjH4Z1WkPd4bkFrjaC0FQk"/>
+</div>
+<script>
+        // Simple micro-interaction for the countdown
+        let timeLeft = 10;
+        const countdownLabel = document.getElementById('countdown-label');
+        const continueBtn = document.getElementById('continue-btn');
+
+        const timerInterval = setInterval(() => {
+            if (timeLeft > 0) {
+                timeLeft--;
+                countdownLabel.innerText = timeLeft + 's';
+            } else {
+                clearInterval(timerInterval);
+                countdownLabel.classList.add('opacity-0');
+            }
+        }, 1000);
+
+        // Simple PIN simulation
+        let pinCount = 0;
+        const dots = [
+            document.getElementById('dot-1'),
+            document.getElementById('dot-2'),
+            document.getElementById('dot-3'),
+            document.getElementById('dot-4')
+        ];
+
+        document.querySelectorAll('.keypad-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const text = btn.innerText.trim();
+                if (!text && btn.querySelector('span')) {
+                    // Backspace logic
+                    if (pinCount > 0) {
+                        pinCount--;
+                        dots[pinCount].classList.remove('bg-secondary');
+                        dots[pinCount].classList.add('bg-secondary-container/40');
+                        dots[pinCount].style.transform = 'scale(1)';
+                    }
+                } else if (text && pinCount < 4) {
+                    // Enter digit logic
+                    dots[pinCount].classList.remove('bg-secondary-container/40');
+                    dots[pinCount].classList.add('bg-secondary');
+                    dots[pinCount].style.transform = 'scale(1.2)';
+                    pinCount++;
+                    
+                    if(pinCount === 4) {
+                        // Flash success and reset
+                        setTimeout(() => {
+                            dots.forEach(dot => {
+                                dot.classList.replace('bg-secondary', 'bg-primary');
+                            });
+                            setTimeout(() => {
+                                alert('Session extended successfully.');
+                                location.reload();
+                            }, 300);
+                        }, 200);
+                    }
+                }
+            });
+        });
+
+        // Soft Scroll to PIN
+        document.getElementById('show-pin-btn').addEventListener('click', () => {
+            document.getElementById('pin-section').scrollIntoView({ behavior: 'smooth' });
+        });
+    </script>
+</body></html>

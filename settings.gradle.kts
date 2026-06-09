@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Digital Guard"
+rootProject.name = "MindFul Scrolling"
 include(":app")
