@@ -7,4 +7,16 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <!-- Serene Guard Pastel Palette -->
+    <color name="surface_cream">#FAF9F6</color>
+    <color name="surface_cream_translucent">#D9FAF9F6</color>
+    <color name="primary_mint">#146A5C</color>
+    <color name="primary_mint_light">#86D2C1</color>
+    <color name="secondary_lavender">#CFC1FF</color>
+    <color name="accent_peach">#FFB3A7</color>
+    <color name="text_charcoal">#1A1C1A</color>
+    <color name="text_lavender_charcoal">#3F4946</color>
+    <color name="disabled_grey">#E3E2E0</color>
+    <color name="numpad_bg">#F4F3F1</color>
 </resources>

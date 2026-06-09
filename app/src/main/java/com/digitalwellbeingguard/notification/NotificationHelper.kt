@@ -45,7 +45,7 @@ class NotificationHelper(private val context: Context) {
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle("Digital Wellbeing Active")
             .setContentText("Monitoring usage...")
-            .setSmallIcon(R.mipmap.ic_launcher) 
+            .setSmallIcon(R.drawable.ic_launcher_foreground) 
             .setPriority(NotificationCompat.PRIORITY_DEFAULT) // FIX: Changed from LOW to DEFAULT
             .setCategory(NotificationCompat.CATEGORY_SERVICE) // FIX: Added category
             .setContentIntent(pendingIntent)
@@ -62,7 +62,7 @@ class NotificationHelper(private val context: Context) {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle("Digital Wellbeing Active")
             .setContentText("Monitoring usage... $time")
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT) // FIX: Changed from LOW to DEFAULT
             .setCategory(NotificationCompat.CATEGORY_SERVICE) // FIX: Added category
             .setContentIntent(pendingIntent)

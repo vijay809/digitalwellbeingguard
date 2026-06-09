@@ -101,14 +101,13 @@ class OverlayManager(private val context: Context) {
                             btnUnlock?.visibility = View.GONE
                             countDownTimer?.cancel()
                             btnContinue?.isEnabled = true
-                            btnContinue?.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#2196F3"))
                             btnContinue?.text = "Continue"
                             cbExcludeApp?.visibility = View.VISIBLE
                         } else {
                             // Incorrect PIN
                             layoutNumpad?.visibility = View.GONE
                             btnUnlock?.isEnabled = false
-                            btnUnlock?.backgroundTintList = ColorStateList.valueOf(Color.RED)
+                            btnUnlock?.backgroundTintList = ColorStateList.valueOf(androidx.core.content.ContextCompat.getColor(context, R.color.accent_peach))
                         }
                     }
                 }
@@ -136,7 +135,6 @@ class OverlayManager(private val context: Context) {
             
             if (delaySeconds > 0) {
                 btnContinue?.isEnabled = false
-                btnContinue?.backgroundTintList = ColorStateList.valueOf(Color.GRAY)
                 btnContinue?.text = "Continue (${delaySeconds}s)"
                 countDownTimer = object : CountDownTimer((delaySeconds * 1000).toLong(), 1000) {
                     override fun onTick(millisUntilFinished: Long) {
@@ -146,13 +144,11 @@ class OverlayManager(private val context: Context) {
 
                     override fun onFinish() {
                         btnContinue?.isEnabled = true
-                        btnContinue?.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#2196F3"))
                         btnContinue?.text = "Continue"
                     }
                 }.start()
             } else {
                 btnContinue?.isEnabled = true
-                btnContinue?.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#2196F3"))
                 btnContinue?.text = "Continue"
             }
 
