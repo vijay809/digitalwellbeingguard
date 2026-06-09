@@ -13,3 +13,5 @@
 .externalNativeBuild
 .cxx
 local.properties
+/scratch
+/stitch_assets

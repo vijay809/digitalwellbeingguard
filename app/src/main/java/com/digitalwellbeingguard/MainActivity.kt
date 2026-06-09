@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.zIndex
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.Lifecycle
@@ -465,7 +466,9 @@ fun MonitoringStatusCard(viewModel: MainViewModel, isAppUnlocked: Boolean) {
     val isMonitoring by viewModel.isMonitoring.collectAsState()
     val context = LocalContext.current
     val selectedInterval by viewModel.selectedInterval.collectAsState()
-    var expanded by remember { mutableStateOf(false) }
+    val selectedRefreshInterval by viewModel.selectedRefreshInterval.collectAsState()
+    var expandedWarning by remember { mutableStateOf(false) }
+    var expandedRefresh by remember { mutableStateOf(false) }
 
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val scale by infiniteTransition.animateFloat(
@@ -531,7 +534,7 @@ fun MonitoringStatusCard(viewModel: MainViewModel, isAppUnlocked: Boolean) {
                         .clip(RoundedCornerShape(99.dp))
                         .background(Color.White.copy(alpha = 0.3f))
                         .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f), RoundedCornerShape(99.dp))
-                        .clickable(enabled = isAppUnlocked) { expanded = true }
+                        .clickable(enabled = isAppUnlocked) { expandedWarning = true }
                         .padding(vertical = 12.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -540,15 +543,68 @@ fun MonitoringStatusCard(viewModel: MainViewModel, isAppUnlocked: Boolean) {
                         Text(text = "Warning Interval: ${selectedInterval.label}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface)
                     }
                 }
-                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                    MainViewModel.WarningInterval.entries.forEach { interval ->
-                        DropdownMenuItem(
-                            text = { Text(interval.label) },
-                            onClick = {
-                                viewModel.setWarningInterval(context, interval)
-                                expanded = false
+                if (expandedWarning) {
+                    Dialog(onDismissRequest = { expandedWarning = false }) {
+                        Card(
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
+                                Text("Select Warning Interval", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 16.dp))
+                                MainViewModel.WarningInterval.entries.forEach { interval ->
+                                    TextButton(
+                                        onClick = {
+                                            viewModel.setWarningInterval(context, interval)
+                                            expandedWarning = false
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(interval.label)
+                                    }
+                                }
                             }
-                        )
+                        }
+                    }
+                }
+            }
+
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(Color.White.copy(alpha = 0.3f))
+                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f), RoundedCornerShape(99.dp))
+                        .clickable(enabled = isAppUnlocked) { expandedRefresh = true }
+                        .padding(vertical = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.Refresh, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(text = "Refresh Session After: ${selectedRefreshInterval.label}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface)
+                    }
+                }
+                if (expandedRefresh) {
+                    Dialog(onDismissRequest = { expandedRefresh = false }) {
+                        Card(
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
+                                Text("Refresh Session After", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 16.dp))
+                                MainViewModel.RefreshInterval.entries.forEach { interval ->
+                                    TextButton(
+                                        onClick = {
+                                            viewModel.setRefreshInterval(context, interval)
+                                            expandedRefresh = false
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(interval.label)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

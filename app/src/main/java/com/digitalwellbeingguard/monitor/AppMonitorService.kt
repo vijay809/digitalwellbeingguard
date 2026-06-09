@@ -25,12 +25,19 @@ class AppMonitorService : Service() {
     private val serviceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     
     private var lastApp: String? = null
-    private var sessionStartTime: Long = 0L
-    private var warningTriggered = false
     private var warningIntervalMs: Long = 60_000L // Default 1 min if prefs fail
-    private var nextTriggerTime: Long = 0L
-    private var warningCount = 0
     private var monitoredApps: Set<String> = emptySet()
+
+    private val sessionStates = mutableMapOf<String, AppSessionState>()
+    private var sessionTimeoutMs: Long = 60 * 60 * 1000L // Default 60 minutes
+
+    data class AppSessionState(
+        var accumulatedTimeMs: Long = 0L,
+        var lastActiveTime: Long = 0L,
+        var warningCount: Int = 0,
+        var nextTriggerTimeMs: Long = 0L,
+        var warningTriggered: Boolean = false
+    )
 
     override fun onCreate() {
         super.onCreate()
@@ -41,6 +48,7 @@ class AppMonitorService : Service() {
         // Load interval preference
         val prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(this)
         warningIntervalMs = prefs.getLong("warning_interval", 300_000L) // Default 5 mins (300,000)
+        sessionTimeoutMs = prefs.getLong("refresh_interval", 60 * 60_000L) // Default 60 mins
         monitoredApps = prefs.getStringSet("explicit_monitored_apps", emptySet()) ?: emptySet()
     }
 
@@ -71,35 +79,49 @@ class AppMonitorService : Service() {
     
     private fun startMonitoringLoop() {
         serviceScope.launch {
-            sessionStartTime = System.currentTimeMillis()
-            nextTriggerTime = warningIntervalMs // First trigger target
+            var lastLoopTime = System.currentTimeMillis()
             
             while (isActive) {
+                val now = System.currentTimeMillis()
+                val delta = now - lastLoopTime
+                lastLoopTime = now
+                
                 val foregroundApp = getForegroundApp()
                 
-                if (foregroundApp != null && foregroundApp != lastApp) {
-                    if (foregroundApp == packageName) {
-                        // Ignore self - continue previous session
-                        Log.d("AppMonitor", "Ignoring self: $packageName")
-                    } else if (isMonitoredApp(foregroundApp)) {
-                        // App changed to another monitored app (or new session)
-                        lastApp = foregroundApp
-                        sessionStartTime = System.currentTimeMillis()
-                        // Reset trigger logic for new session
-                        nextTriggerTime = warningIntervalMs
-                        warningTriggered = false
-                        warningCount = 0
-                        
-                        Log.d("AppMonitor", "Session started for: $foregroundApp. Interval: ${warningIntervalMs}ms")
-                    } else {
-                        lastApp = null 
-                        Log.d("AppMonitor", "Session ended (Launcher/System/Excluded)")
+                // Cleanup old sessions
+                val iterator = sessionStates.iterator()
+                while (iterator.hasNext()) {
+                    val entry = iterator.next()
+                    if (entry.key != foregroundApp && (now - entry.value.lastActiveTime) > sessionTimeoutMs) {
+                        Log.d("AppMonitor", "Session expired for ${entry.key}")
+                        iterator.remove()
                     }
                 }
+                
+                if (foregroundApp != null && isMonitoredApp(foregroundApp)) {
+                    val state = sessionStates.getOrPut(foregroundApp) {
+                        Log.d("AppMonitor", "Session started for: $foregroundApp. Interval: ${warningIntervalMs}ms")
+                        AppSessionState(
+                            accumulatedTimeMs = 0L,
+                            lastActiveTime = now,
+                            warningCount = 0,
+                            nextTriggerTimeMs = warningIntervalMs,
+                            warningTriggered = false
+                        )
+                    }
+                    
+                    if (lastApp != foregroundApp) {
+                        Log.d("AppMonitor", "Resuming session for: $foregroundApp")
+                        lastApp = foregroundApp
+                    }
+                    
+                    // Accumulate time (cap delta at 5000ms to avoid sleep jumps)
+                    if (delta in 0..5000) {
+                        state.accumulatedTimeMs += delta
+                    }
+                    state.lastActiveTime = now
 
-                if (lastApp != null) {
-                    val elapsedTime = System.currentTimeMillis() - sessionStartTime
-                    val formattedTime = formatTime(elapsedTime)
+                    val formattedTime = formatTime(state.accumulatedTimeMs)
                     notificationHelper.updateNotification(formattedTime)
 
                     if (overlayManager.isOverlayShowing()) {
@@ -108,46 +130,51 @@ class AppMonitorService : Service() {
                         }
                     }
 
-                    // Check against nextTriggerTime
-                    if (elapsedTime >= nextTriggerTime && !warningTriggered) {
-                         launch(Dispatchers.Main) {
-                             if (!overlayManager.isOverlayShowing()) {
-                                  val label = getIntervalLabel(warningIntervalMs)
-                                  val message = "You've been using apps for $label."
-                                  val delaySeconds = warningCount * 10
-                                  overlayManager.showOverlay(formattedTime, message, delaySeconds) { isExcluded ->
-                                      if (isExcluded && lastApp != null) {
-                                          val prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(this@AppMonitorService)
-                                          val excluded = prefs.getStringSet("explicit_excluded_apps", emptySet())?.toMutableSet() ?: mutableSetOf()
-                                          excluded.add(lastApp!!)
-                                          
-                                          val monitored = prefs.getStringSet("explicit_monitored_apps", emptySet())?.toMutableSet() ?: mutableSetOf()
-                                          monitored.remove(lastApp!!)
-                                          
-                                          prefs.edit()
-                                              .putStringSet("explicit_excluded_apps", excluded)
-                                              .putStringSet("explicit_monitored_apps", monitored)
-                                              .apply()
-                                              
-                                          monitoredApps = monitored
-                                          lastApp = null
-                                          notificationHelper.updateNotification("Monitoring app usage...")
-                                      }
-
-                                      // On Continue Clicked
-                                      warningTriggered = false
-                                      warningCount++
-                                      
-                                      // Set next trigger time strictly relative to the exact moment the user clicks continue
-                                      val currentElapsed = System.currentTimeMillis() - sessionStartTime
-                                      nextTriggerTime = currentElapsed + warningIntervalMs
-                                  }
-                             }
-                         }
-                         warningTriggered = true
+                    // Check trigger
+                    if (state.accumulatedTimeMs >= state.nextTriggerTimeMs && !state.warningTriggered) {
+                        state.warningTriggered = true
+                        launch(Dispatchers.Main) {
+                            if (!overlayManager.isOverlayShowing()) {
+                                val label = getIntervalLabel(warningIntervalMs)
+                                val message = "You've been using apps for $label."
+                                val delaySeconds = state.warningCount * 10
+                                overlayManager.showOverlay(formattedTime, message, delaySeconds) { isExcluded ->
+                                    if (isExcluded) {
+                                        val prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(this@AppMonitorService)
+                                        val excluded = prefs.getStringSet("explicit_excluded_apps", emptySet())?.toMutableSet() ?: mutableSetOf()
+                                        excluded.add(foregroundApp)
+                                        
+                                        val monitored = prefs.getStringSet("explicit_monitored_apps", emptySet())?.toMutableSet() ?: mutableSetOf()
+                                        monitored.remove(foregroundApp)
+                                        
+                                        prefs.edit()
+                                            .putStringSet("explicit_excluded_apps", excluded)
+                                            .putStringSet("explicit_monitored_apps", monitored)
+                                            .apply()
+                                            
+                                        monitoredApps = monitored
+                                        lastApp = null
+                                        sessionStates.remove(foregroundApp)
+                                        notificationHelper.updateNotification("Monitoring app usage...")
+                                    } else {
+                                        state.warningTriggered = false
+                                        state.warningCount++
+                                        state.nextTriggerTimeMs = state.accumulatedTimeMs + warningIntervalMs
+                                    }
+                                }
+                            }
+                        }
                     }
+                } else if (foregroundApp == packageName) {
+                    // Ignore self
+                } else {
+                    if (lastApp != null) {
+                        notificationHelper.updateNotification("Monitoring app usage...")
+                        Log.d("AppMonitor", "Session backgrounded")
+                    }
+                    lastApp = null 
                 }
-                
+
                 delay(1000)
             }
         }

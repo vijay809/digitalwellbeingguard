@@ -61,11 +61,35 @@ class MainViewModel : ViewModel() {
     private val _selectedInterval = MutableStateFlow(WarningInterval.MIN_5)
     val selectedInterval: StateFlow<WarningInterval> = _selectedInterval.asStateFlow()
     
+    enum class RefreshInterval(val millis: Long, val label: String) {
+        MIN_10(10 * 60_000L, "10 Minutes"),
+        MIN_30(30 * 60_000L, "30 Minutes"),
+        HR_1(60 * 60_000L, "1 Hour"),
+        HR_2(2 * 60 * 60_000L, "2 Hours"),
+        HR_4(4 * 60 * 60_000L, "4 Hours"),
+        HR_6(6 * 60 * 60_000L, "6 Hours"),
+        HR_8(8 * 60 * 60_000L, "8 Hours"),
+        HR_10(10 * 60 * 60_000L, "10 Hours"),
+        HR_12(12 * 60 * 60_000L, "12 Hours");
+        
+        companion object {
+            fun fromMillis(millis: Long): RefreshInterval {
+                return entries.find { it.millis == millis } ?: HR_1
+            }
+        }
+    }
+    
+    private val _selectedRefreshInterval = MutableStateFlow(RefreshInterval.HR_1)
+    val selectedRefreshInterval: StateFlow<RefreshInterval> = _selectedRefreshInterval.asStateFlow()
+    
         // Load saved interval on init
     fun loadSettings(context: Context) {
         val prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context)
         val savedMillis = prefs.getLong("warning_interval", 300_000L)
         _selectedInterval.value = WarningInterval.fromMillis(savedMillis)
+        
+        val savedRefreshMillis = prefs.getLong("refresh_interval", 60 * 60_000L)
+        _selectedRefreshInterval.value = RefreshInterval.fromMillis(savedRefreshMillis)
         
         loadPinState(context)
 
@@ -110,6 +134,19 @@ class MainViewModel : ViewModel() {
         if (isServiceRunning(context)) {
             stopMonitoring(context)
             // Small delay to ensure clean stop
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                startMonitoring(context)
+            }, 500)
+        }
+    }
+    
+    fun setRefreshInterval(context: Context, interval: RefreshInterval) {
+        val prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context)
+        prefs.edit().putLong("refresh_interval", interval.millis).apply()
+        _selectedRefreshInterval.value = interval
+        
+        if (isServiceRunning(context)) {
+            stopMonitoring(context)
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 startMonitoring(context)
             }, 500)
@@ -216,6 +253,9 @@ class MainViewModel : ViewModel() {
         val prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context)
         val savedMillis = prefs.getLong("warning_interval", 300_000L)
         _selectedInterval.value = WarningInterval.fromMillis(savedMillis)
+        
+        val savedRefreshMillis = prefs.getLong("refresh_interval", 60 * 60_000L)
+        _selectedRefreshInterval.value = RefreshInterval.fromMillis(savedRefreshMillis)
 
         loadPinState(context)
         
